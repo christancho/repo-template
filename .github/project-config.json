@@ -1,0 +1,14 @@
+{
+  "project_node_id": "",
+  "status_field_id": "",
+  "options": {
+    "Won't do":   "",
+    "Backlog":    "",
+    "Ready":      "",
+    "In Progress":"",
+    "In Review":  "",
+    "Done":       "",
+    "In Staging": "",
+    "Released":   ""
+  }
+}

@@ -1,0 +1,71 @@
+name: Move In Staging issues to Released on merge to main
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  move-to-released:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Find all In Staging items in GitHub Projects
+        id: staging_items
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          CONFIG=".github/project-config.json"
+          OWNER="${{ github.repository_owner }}"
+          PROJECT_NUMBER="${{ vars.PROJECT_NUMBER }}"
+          IN_STAGING_OPTION_ID=$(jq -r '.options["In Staging"]' "$CONFIG")
+
+          ITEM_IDS=$(gh api graphql -f query="
+          {
+            user(login: \"$OWNER\") {
+              projectV2(number: $PROJECT_NUMBER) {
+                items(first: 100) {
+                  nodes {
+                    id
+                    fieldValues(first: 20) {
+                      nodes {
+                        ... on ProjectV2ItemFieldSingleSelectValue {
+                          optionId
+                          field { ... on ProjectV2SingleSelectField { name } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }" --jq "[.data.user.projectV2.items.nodes[] | select(.fieldValues.nodes[] | select(.field.name == \"Status\") | .optionId == \"$IN_STAGING_OPTION_ID\") | .id] | join(\" \")")
+          echo "item_ids=$ITEM_IDS" >> "$GITHUB_OUTPUT"
+
+      - name: Move In Staging items to Released
+        if: steps.staging_items.outputs.item_ids != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          CONFIG=".github/project-config.json"
+          PROJECT_NODE_ID=$(jq -r '.project_node_id' "$CONFIG")
+          STATUS_FIELD_ID=$(jq -r '.status_field_id' "$CONFIG")
+          RELEASED_OPTION_ID=$(jq -r '.options["Released"]' "$CONFIG")
+
+          for ITEM_ID in ${{ steps.staging_items.outputs.item_ids }}; do
+            gh api graphql -f query="
+            mutation {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: \"$PROJECT_NODE_ID\"
+                itemId: \"$ITEM_ID\"
+                fieldId: \"$STATUS_FIELD_ID\"
+                value: { singleSelectOptionId: \"$RELEASED_OPTION_ID\" }
+              }) {
+                projectV2Item { id }
+              }
+            }" > /dev/null
+            echo "Moved item $ITEM_ID to Released"
+          done
