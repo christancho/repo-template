@@ -40,10 +40,7 @@ echo ""
 # Detect the template repo from this script's git remote
 TEMPLATE_REPO=$(git -C "$(dirname "$0")" remote get-url origin 2>/dev/null \
   | sed 's|.*github\.com[:/]\(.*\)\.git|\1|; s|.*github\.com[:/]\(.*\)|\1|')
-if [ -z "$TEMPLATE_REPO" ]; then
-  read -rp "Template repo (owner/name): " TEMPLATE_REPO
-  [ -z "$TEMPLATE_REPO" ] && { echo "Template repo required"; exit 1; }
-fi
+TEMPLATE_REPO="${TEMPLATE_REPO:-christancho/repo-template}"
 
 echo "Creating $OWNER/$REPO from template $TEMPLATE_REPO..."
 gh repo create "$OWNER/$REPO" \
