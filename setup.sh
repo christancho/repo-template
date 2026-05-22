@@ -164,23 +164,7 @@ mutation {
 }" > /dev/null
 echo "Estimate field created"
 
-# ── 11. Technical analysis field ─────────────────────────────────────────────
-gh api graphql -f query="
-mutation {
-  createProjectV2Field(input: {
-    projectId: \"$PROJECT_ID\"
-    dataType: SINGLE_SELECT
-    name: \"Technical analysis\"
-    singleSelectOptions: [
-      { name: \"Pending\",     color: GRAY,   description: \"\" }
-      { name: \"In progress\", color: YELLOW, description: \"\" }
-      { name: \"Complete\",    color: GREEN,  description: \"\" }
-    ]
-  }) { projectV2Field { __typename } }
-}" > /dev/null
-echo "Technical analysis field created"
-
-# ── 12. Write and commit project-config.json ──────────────────────────────────
+# ── 11. Write and commit project-config.json ──────────────────────────────────
 CONFIG=$(gh api graphql -f query="
 {
   node(id: \"$PROJECT_ID\") {
