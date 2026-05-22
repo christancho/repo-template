@@ -4,7 +4,7 @@ A project template that comes pre-wired with:
 
 - A **three-branch pipeline**: `main` (production) → `stg` (staging) → `dev` (integration)
 - **GitHub Actions** that automatically move issues across the project board as code progresses
-- A **GitHub Project board** with Status, Priority, Size, Estimate, and Technical analysis fields
+- A **GitHub Project board** with Status, Priority, Size, and Estimate fields
 - **Branch protection** so nobody (including you) can accidentally push directly to `main`, `stg`, or `dev`
 - A **setup script** that configures everything in one shot
 
