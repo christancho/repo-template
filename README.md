@@ -141,11 +141,11 @@ The `Closes #42` in the PR body is important — it's what tells GitHub Actions 
 
 ### Deploying to staging
 
-After merging a PR to `dev`, GitHub Actions automatically creates a `dev → stg` PR for you. When you merge that PR, all **Done** issues move to **In Staging**.
+After merging a PR to `dev`, GitHub Actions automatically creates a `dev → stg` PR for you. Merge it when you're ready to test on staging.
 
 ### Deploying to production
 
-After merging to `stg`, GitHub Actions automatically creates a `stg → main` PR. When you merge that, all **In Staging** issues move to **Released**.
+After merging to `stg`, GitHub Actions automatically creates a `stg → main` PR. Merge it when you're ready to go live.
 
 ---
 
@@ -153,13 +153,27 @@ After merging to `stg`, GitHub Actions automatically creates a `stg → main` PR
 
 | Column | When an issue moves here |
 |---|---|
-| Backlog | Issue created |
-| Ready | Planned and ready to work on |
-| In Progress | Feature branch `feature/123-*` pushed |
-| In Review | PR opened targeting `dev` |
-| Done | PR merged to `dev` |
-| In Staging | `dev → stg` PR opened |
-| Released | PR merged to `main` |
+| Backlog | Issue created (automatic) |
+| Ready | PM reviews backlog and marks it ready (manual) |
+| In Progress | Feature branch `feature/123-*` pushed (automatic) |
+| In Review | PR opened targeting `dev` (automatic) |
+| Done | PR merged to `dev` (automatic) |
+
+Use a **Blocked** label on any issue that's stuck — it can sit in any column with that label rather than needing a separate column.
+
+## GitHub Actions workflows
+
+Five workflows run automatically — you never need to trigger them manually:
+
+| Workflow | What triggers it | What it does |
+|---|---|---|
+| `issue-to-backlog.yml` | New issue opened | Adds the issue to the project board as Backlog |
+| `issue-to-in-progress.yml` | `feature/*` branch pushed | Moves the linked issue to In Progress |
+| `issue-to-in-review.yml` | PR opened targeting `dev` | Moves issues from `Closes #N` lines to In Review |
+| `pr-to-stg.yml` | PR merged into `dev` | Moves issues to Done, creates `dev → stg` PR |
+| `pr-to-main.yml` | PR merged into `stg` | Creates `stg → main` PR |
+
+The key to making the automation work is always including `Closes #N` in your PR body for every issue the PR resolves.
 
 ---
 
@@ -175,10 +189,9 @@ docs/git-strategy.md              — Full reference for the branching strategy
     create-project.sh             — Creates the GitHub Project board
     move-issue.sh                 — Moves a single issue to a given status
   workflows/
-    branch-to-in-progress.yml     — Triggers when feature/* branch is pushed
-    pr-to-in-review.yml           — Triggers when PR is opened → dev
-    dev-merged.yml                — Triggers when PR is merged → dev
-    stg-pr-opened.yml             — Triggers when PR is opened → stg
-    stg-merged.yml                — Triggers when PR is merged → stg
-    main-merged.yml               — Triggers when PR is merged → main
+    issue-to-backlog.yml          — Issue opened → added to board as Backlog
+    issue-to-in-progress.yml      — feature/* branch pushed → issue moves to In Progress
+    issue-to-in-review.yml        — PR opened → dev → issues move to In Review
+    pr-to-stg.yml                 — PR merged → dev → issues Done + creates dev→stg PR
+    pr-to-main.yml                — PR merged → stg → creates stg→main PR
 ```
