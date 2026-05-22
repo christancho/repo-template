@@ -33,65 +33,30 @@ A personal project template that comes pre-wired with:
 
 ## Creating a new project from this template
 
-### Step 1 — Create the repo
-
-Run this command, replacing `your-username` and `new-project-name` with your values:
+Run this from anywhere on your machine:
 
 ```bash
-gh repo create your-username/new-project-name \
-  --template christancho/repo-template \
-  --private \
-  --clone
+bash <(curl -fsSL https://raw.githubusercontent.com/christancho/repo-template/main/setup.sh)
 ```
 
-- `--template christancho/repo-template` copies all files from this template into your new repo
-- `--private` makes the repo private (remove this flag if you want it public)
-- `--clone` automatically downloads the repo to your computer after creating it
+The script will prompt you for:
 
-### Step 2 — Enter the new repo folder
-
-```bash
-cd new-project-name
-```
-
-### Step 3 — Run the setup script
-
-```bash
-GH_TOKEN=<your-pat> bash setup.sh
-```
-
-Replace `<your-pat>` with the token you created earlier. For example:
-
-```bash
-GH_TOKEN=ghp_abc123xyz bash setup.sh
-```
-
-The script will ask you three questions:
-
-- **GitHub username or org** — your GitHub username, e.g. `christancho`
-- **Repo name** — the name you just created, e.g. `new-project-name` (it tries to detect this automatically)
-- **Project board title** — what to call the board, e.g. `My App` (defaults to the repo name)
+- **GitHub Personal Access Token** — entered hidden (no echo)
+- **GitHub username or org** — defaults to `christancho`
+- **New repo name** — e.g. `my-new-project`
+- **Project board title** — defaults to the repo name
 
 Then it will automatically:
 
-1. Create the `dev` and `stg` branches and push them to GitHub
-2. Create the GitHub Project board with all columns and fields
-3. Write `.github/project-config.json` (stores the board's internal IDs — don't edit this manually)
-4. Set `PROJECT_NUMBER` as a GitHub Actions variable so the automation workflows know which board to use
-5. Apply branch protection rules to `main`, `stg`, and `dev`
+1. Create the repo on GitHub from this template and clone it locally
+2. Create the `dev` and `stg` branches and push them
+3. Create the GitHub Project board with all columns and fields
+4. Commit `.github/project-config.json` (stores the board's internal IDs)
+5. Set `PROJECT_NUMBER` as a GitHub Actions variable
+6. Apply branch protection rules to `main`, `stg`, and `dev`
+7. Offer to set the `GH_PAT` secret (required for workflow automation)
 
-### Step 4 — Add the PAT as a secret (one manual step)
-
-The GitHub Actions workflows need your PAT to move issues and create PRs. You need to add it as a repository secret:
-
-1. Go to your new repo on GitHub
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Name: `GH_PAT`
-5. Value: paste your PAT
-6. Click **Add secret**
-
-That's it — your repo is fully set up.
+After setup, `cd` into the new project folder and start working.
 
 ---
 
@@ -119,11 +84,6 @@ You never commit directly to any of these. All work happens on feature branches.
 git checkout dev
 git pull
 git checkout -b feature/42-short-description
-```
-
-For example:
-```bash
-git checkout -b feature/42-add-login-page
 ```
 
 As soon as you push this branch, GitHub Actions automatically moves issue #42 to **In Progress** on the board.
@@ -180,13 +140,13 @@ The key to making the automation work is always including `Closes #N` in your PR
 ## Files in this template
 
 ```
-setup.sh                          — Run once after creating the repo
+setup.sh                          — Run once to create and configure a new repo
 README.md                         — This file
 docs/git-strategy.md              — Full reference for the branching strategy
 .github/
   project-config.json             — Board IDs written by setup.sh (don't edit)
   scripts/
-    create-project.sh             — Creates the GitHub Project board
+    create-project.sh             — Creates the GitHub Project board (called by setup.sh)
     move-issue.sh                 — Moves a single issue to a given status
   workflows/
     issue-to-backlog.yml          — Issue opened → added to board as Backlog
