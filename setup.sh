@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates and fully configures a new GitHub repo from christancho/repo-template.
+# Creates and fully configures a new GitHub repo from this template.
 # Run from anywhere — no prior clone needed.
 #
 # Usage:
@@ -19,8 +19,8 @@ export GH_TOKEN
 [ -z "$GH_TOKEN" ] && { echo "Token required"; exit 1; }
 
 # ── 2. Prompt for repo details ────────────────────────────────────────────────
-read -rp "GitHub username or org [christancho]: " OWNER
-OWNER="${OWNER:-christancho}"
+read -rp "GitHub username or org: " OWNER
+[ -z "$OWNER" ] && { echo "Owner required"; exit 1; }
 
 read -rp "New repo name: " REPO
 [ -z "$REPO" ] && { echo "Repo name required"; exit 1; }
@@ -37,9 +37,17 @@ fi
 echo ""
 
 # ── 3. Create and clone the repo ──────────────────────────────────────────────
-echo "Creating $OWNER/$REPO from template..."
+# Detect the template repo from this script's git remote
+TEMPLATE_REPO=$(git -C "$(dirname "$0")" remote get-url origin 2>/dev/null \
+  | sed 's|.*github\.com[:/]\(.*\)\.git|\1|; s|.*github\.com[:/]\(.*\)|\1|')
+if [ -z "$TEMPLATE_REPO" ]; then
+  read -rp "Template repo (owner/name): " TEMPLATE_REPO
+  [ -z "$TEMPLATE_REPO" ] && { echo "Template repo required"; exit 1; }
+fi
+
+echo "Creating $OWNER/$REPO from template $TEMPLATE_REPO..."
 gh repo create "$OWNER/$REPO" \
-  --template christancho/repo-template \
+  --template "$TEMPLATE_REPO" \
   "--$VISIBILITY" \
   --clone
 
@@ -66,7 +74,9 @@ git checkout main
 echo ""
 echo "Creating GitHub Project..."
 
-OWNER_ID=$(gh api graphql -f query="{user(login:\"$OWNER\"){id}}" --jq '.data.user.id')
+OWNER_ID=$(gh api graphql -f query="{user(login:\"$OWNER\"){id}}" --jq '.data.user.id' 2>/dev/null \
+  || gh api graphql -f query="{organization(login:\"$OWNER\"){id}}" --jq '.data.organization.id')
+[ -z "$OWNER_ID" ] && { echo "Could not resolve owner ID for '$OWNER'"; exit 1; }
 echo "Owner: $OWNER ($OWNER_ID)"
 
 RESULT=$(gh api graphql -f query="
@@ -231,7 +241,13 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "  Repo:    https://github.com/$OWNER/$REPO"
-echo "  Board:   https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
+# Board URL differs for personal accounts vs orgs
+IS_ORG=$(gh api "orgs/$OWNER" --jq '.login' 2>/dev/null || true)
+if [ -n "$IS_ORG" ]; then
+  echo "  Board:   https://github.com/orgs/$OWNER/projects/$PROJECT_NUMBER"
+else
+  echo "  Board:   https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
+fi
 echo ""
 echo "Next:"
 echo "  cd $REPO"

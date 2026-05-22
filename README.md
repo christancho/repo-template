@@ -1,6 +1,6 @@
 # repo-template
 
-A personal project template that comes pre-wired with:
+A project template that comes pre-wired with:
 
 - A **three-branch pipeline**: `main` (production) → `stg` (staging) → `dev` (integration)
 - **GitHub Actions** that automatically move issues across the project board as code progresses
@@ -33,18 +33,29 @@ A personal project template that comes pre-wired with:
 
 ## Creating a new project from this template
 
-Run this from anywhere on your machine:
+Clone this template repo, then run the setup script from inside it:
+
+```bash
+git clone https://github.com/christancho/repo-template
+cd repo-template
+bash setup.sh
+```
+
+Or run it directly without cloning:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/christancho/repo-template/main/setup.sh)
 ```
 
+> **Note:** The script auto-detects the template repo from its own git remote. If you run it via `curl` (no local clone), it will prompt you for the template repo path instead.
+
 The script will prompt you for:
 
 - **GitHub Personal Access Token** — entered hidden (no echo)
-- **GitHub username or org** — defaults to `christancho`
+- **GitHub username or org** — the account that will own the new repo
 - **New repo name** — e.g. `my-new-project`
 - **Project board title** — defaults to the repo name
+- **Visibility** — `private` or `public` (defaults to `private`)
 
 Then it will automatically:
 
