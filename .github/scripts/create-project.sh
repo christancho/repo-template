@@ -50,14 +50,11 @@ mutation {
     projectId: \"$PROJECT_ID\"
     fieldId:   \"$STATUS_FIELD_ID\"
     singleSelectOptions: [
-      { name: \"Won't do\",   color: GRAY,   description: \"\" }
-      { name: \"Backlog\",    color: GRAY,   description: \"\" }
-      { name: \"Ready\",      color: BLUE,   description: \"\" }
-      { name: \"In Progress\",color: YELLOW, description: \"\" }
-      { name: \"In Review\",  color: ORANGE, description: \"\" }
-      { name: \"Done\",       color: GREEN,  description: \"\" }
-      { name: \"In Staging\", color: PURPLE, description: \"\" }
-      { name: \"Released\",   color: GREEN,  description: \"\" }
+      { name: \"Backlog\",     color: GRAY,   description: \"\" }
+      { name: \"Ready\",       color: BLUE,   description: \"\" }
+      { name: \"In Progress\", color: YELLOW, description: \"\" }
+      { name: \"In Review\",   color: ORANGE, description: \"\" }
+      { name: \"Done\",        color: GREEN,  description: \"\" }
     ]
   }) { projectV2Field { id } }
 }" > /dev/null
