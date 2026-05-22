@@ -10,26 +10,9 @@ Read this entire file before starting any task.
 
 ---
 
-## Stack
-
-<!-- Fill in your stack after setup -->
-
-| Layer | Tech |
-|---|---|
-| Frontend | |
-| Backend | |
-| Database | |
-| Deploy | |
-
----
-
-## Key files
-
-<!-- List the most important files and what they do, so the agent knows where to look -->
-
----
-
 ## Behavioral Guidelines
+
+> Inspired by [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills)
 
 ### 1. Think before coding
 
@@ -137,12 +120,7 @@ This file contains a growing ruleset that improves over time. **At session start
 
 <!-- New rules are appended below this line. Do not edit above this section. -->
 
-1. [PROCESS] Never commit and push code that contains non-trivial logic (geometry, math, algorithms) without first running a test or verifying it against real output.
-2. [PROCESS] Always use GitHub Issues (gh CLI) for task tracking — never TodoWrite, task files, or in-session task lists. GitHub Issues is the source of truth.
-3. [PROCESS] GitHub Issues are the source of truth for requirement tracking. Each requirement maps to one issue. Each milestone maps to a phase of work. When a milestone completes, close its issues with a verification reference.
-4. [CODE] Never write empty, silent, or "non-fatal" catch blocks — every catch must either re-throw, push to a failures array with `{ source, message, ts }`, or log with explicit source attribution. `catch {}` and `catch (e) {}` (no body) are forbidden. If an error is genuinely safe to ignore, add a comment explaining why.
-5. [PROCESS] Feature branches always PR into `dev`, never into `main` or `stg` — three-environment pipeline: dev → stg → main.
-6. [PROCESS] Every PR must include `Closes #N` in the body for each issue it resolves. This is what drives the GitHub Projects board automation.
-7. [CODE] Never suppress or ignore deprecation warnings — always fix the root cause. Suppressing with `NODE_OPTIONS=--no-deprecation` or `--no-warnings` is forbidden.
-8. [PROCESS] Always create feature branches from the latest `dev`: `git checkout dev && git pull && git checkout -b feature/123-slug`. Never branch from whatever HEAD happens to be — it may be behind dev.
-9. [CODE] Never fire-and-forget async operations that can fail — background tasks must persist their result (success or error) somewhere visible. `.catch(err => console.error(...))` alone is forbidden for user-facing operations.
+1. [PROCESS] Never commit non-trivial logic (algorithms, calculations, data transformations) without first verifying it against real output — passing tests are not sufficient if the logic was never actually run.
+2. [CODE] Never write empty or silent error handlers — every caught error must either re-throw, be logged with explicit source attribution, or be stored somewhere visible. If an error is genuinely safe to ignore, add a comment explaining the invariant that guarantees it.
+3. [CODE] Never suppress compiler or runtime warnings — always fix the root cause. Warnings exist for a reason; silencing them hides real problems.
+4. [CODE] Never fire-and-forget operations that can fail — background tasks must persist their result (success or error) somewhere the user can see it. Logging to console alone is not enough for user-facing operations.
