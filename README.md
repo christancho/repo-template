@@ -184,7 +184,6 @@ docs/git-strategy.md              — Full reference for the branching strategy
 .github/
   project-config.json             — Board IDs written by setup.sh (don't edit)
   scripts/
-    create-project.sh             — Creates the GitHub Project board (called by setup.sh)
     move-issue.sh                 — Moves a single issue to a given status
   workflows/
     issue-to-backlog.yml          — Issue opened → added to board as Backlog
