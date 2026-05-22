@@ -153,4 +153,9 @@ EOF
 
 echo ""
 echo "✓ .github/project-config.json written"
-echo "✓ Project URL: https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
+IS_ORG=$(gh api "orgs/$OWNER" --jq '.login' 2>/dev/null || true)
+if [ -n "$IS_ORG" ]; then
+  echo "✓ Project URL: https://github.com/orgs/$OWNER/projects/$PROJECT_NUMBER"
+else
+  echo "✓ Project URL: https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
+fi
