@@ -137,6 +137,33 @@ The key to making the automation work is always including `Closes #N` in your PR
 
 ---
 
+## Recommended Claude Code plugins
+
+Two plugins that work well with this template's workflow:
+
+### superpowers
+
+Adds a skills system to Claude Code — structured workflows for planning, debugging, code review, and more.
+
+```
+/plugin install superpowers
+/reload-plugins
+```
+
+### chat-autoexporter
+
+Automatically exports your Claude Code sessions to `.claude/chat-exports/` whenever context compaction fires or a session ends. Useful for keeping a searchable history of decisions and reasoning.
+
+```
+/plugin marketplace add christancho/chat-autoexporter
+/plugin install chat-autoexporter@christancho
+/reload-plugins
+```
+
+No npm dependencies — pure Node.js standard library. If you want to inspect the code before running it, clone the repo and follow the manual setup in its README.
+
+---
+
 ## Files in this template
 
 ```
