@@ -13,8 +13,10 @@ echo "=== New project setup ==="
 echo ""
 
 # ── 1. PAT (interactive, hidden) ─────────────────────────────────────────────
-read -rsp "GitHub Personal Access Token (repo + project scopes): " GH_TOKEN
-echo ""
+if [ -z "${GH_TOKEN:-}" ]; then
+  read -rsp "GitHub Personal Access Token (repo + project scopes): " GH_TOKEN
+  echo ""
+fi
 export GH_TOKEN
 [ -z "$GH_TOKEN" ] && { echo "Token required"; exit 1; }
 
