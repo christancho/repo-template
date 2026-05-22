@@ -28,18 +28,27 @@ read -rp "New repo name: " REPO
 read -rp "Project board title [$REPO]: " PROJECT_TITLE
 PROJECT_TITLE="${PROJECT_TITLE:-$REPO}"
 
+read -rp "Visibility [private/public]: " VISIBILITY
+VISIBILITY="${VISIBILITY:-private}"
+if [[ "$VISIBILITY" != "private" && "$VISIBILITY" != "public" ]]; then
+  echo "Invalid visibility: must be 'private' or 'public'"; exit 1
+fi
+
 echo ""
 
 # ── 3. Create and clone the repo ──────────────────────────────────────────────
 echo "Creating $OWNER/$REPO from template..."
 gh repo create "$OWNER/$REPO" \
   --template christancho/repo-template \
-  --private \
+  "--$VISIBILITY" \
   --clone
 
 cd "$REPO"
 echo "Cloned into $(pwd)"
 echo ""
+
+# Embed token in remote URL so git push doesn't prompt for credentials
+git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/${REPO}.git"
 
 # ── 4. Create dev and stg branches ───────────────────────────────────────────
 for BRANCH in dev stg; do
@@ -203,25 +212,20 @@ echo "Set Actions variable: PROJECT_NUMBER=$PROJECT_NUMBER"
 # ── 14. Branch protection ─────────────────────────────────────────────────────
 echo ""
 echo "Applying branch protection..."
+PROTECTION='{"enforce_admins":true,"required_pull_request_reviews":null,"required_status_checks":null,"restrictions":null,"allow_force_pushes":false,"allow_deletions":false}'
 for BRANCH in main stg dev; do
-  gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" \
-    --method PUT \
-    --input - << BRANCHEOF 2>/dev/null && echo "Protected: $BRANCH" || echo "Skipped $BRANCH (may not exist yet)"
-{
-  "enforce_admins": true,
-  "required_pull_request_reviews": null,
-  "required_status_checks": null,
-  "restrictions": null,
-  "allow_force_pushes": false,
-  "allow_deletions": false
-}
-BRANCHEOF
+  if echo "$PROTECTION" | gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" \
+      --method PUT --input - > /dev/null 2>&1; then
+    echo "Protected: $BRANCH"
+  else
+    echo "Skipped $BRANCH (may not exist yet)"
+  fi
 done
 
 # ── 15. Set GH_PAT secret ─────────────────────────────────────────────────────
 echo ""
 read -rp "Set GH_PAT secret now (uses token you just entered)? [Y/n]: " SET_SECRET
-if [[ "${SET_SECRET,,}" != "n" ]]; then
+if [[ "$SET_SECRET" != "n" && "$SET_SECRET" != "N" ]]; then
   gh secret set GH_PAT --repo "$OWNER/$REPO" --body "$GH_TOKEN"
   echo "GH_PAT secret set"
 else
