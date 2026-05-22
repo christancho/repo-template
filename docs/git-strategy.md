@@ -1,6 +1,6 @@
 # Git Strategy
 
-Three-environment trunk-based flow with automated GitHub Projects lifecycle. Each unit of work is a phase branch → PR → `dev` → staging → production.
+Three-environment trunk-based flow with automated GitHub Projects lifecycle. Each unit of work is a feature branch → PR → `dev` → staging → production.
 
 ---
 
@@ -29,19 +29,19 @@ feature/{issue-number}-{slug}
 
 Examples:
 - `feature/42-add-login`
-- `feature/103-ndvi-confidence`
-- `feature/18-admin-dashboard`
+- `feature/18-user-dashboard`
+- `feature/103-fix-signup-error`
 
 The number is the GitHub issue number for the work being done. The slug is a short description — kebab-case, 2–4 words.
 
 ---
 
-## Starting a Phase Branch
+## Starting a Feature Branch
 
 ```bash
 git checkout dev
 git pull
-git checkout -b feature/123-slug
+git checkout -b feature/42-add-login
 ```
 
 At the start of any resumed work session on an existing branch:
@@ -59,11 +59,11 @@ Always merge latest `dev` before doing anything — features merged to `dev` aft
 Conventional commits, no emojis:
 
 ```
-feat: add NDVI confidence layer
-fix: handle null lot polygon in cadastre lookup
-chore: upgrade sharp to 0.34
-docs: document LiDAR CRS requirement
-refactor: extract snapshot compositing into its own module
+feat: add user login page
+fix: handle empty email on signup
+chore: upgrade dependencies
+docs: document deployment process
+refactor: extract auth logic into separate module
 ```
 
 ---
@@ -80,19 +80,18 @@ Every PR must include:
 
 1. **Summary** — bullet list of what changed
 2. **Test plan** — what was verified
-3. **Closes lines** — one per requirement issue associated with the phase
+3. **Closes lines** — one per issue the PR resolves
 
 ```markdown
 ## Summary
-- Added Sentinel-2 NDVI confidence scoring
-- Stores confidence band in raw_response.ndvi_analysis
+- Added user login with email and password
+- Redirects to dashboard on success
 
 ## Test plan
-- [x] Verified against 8 Montreal test addresses
-- [x] Confirmed null safety when GEE returns no result
+- [x] Tested valid login flow
+- [x] Tested invalid credentials error message
 
-Closes #18
-Closes #19
+Closes #42
 ```
 
 The `Closes #N` lines drive GitHub Projects automation — do not omit them.
@@ -102,19 +101,19 @@ The `Closes #N` lines drive GitHub Projects automation — do not omit them.
 Short, imperative, under 70 characters:
 
 ```
-feat: add NDVI confidence layer (phase 3)
+feat: add user login page
 ```
 
 ---
 
 ## Promotion Pipeline (Automated)
 
-Once a phase PR merges to `dev`, GitHub Actions handles the rest:
+Once a feature PR merges to `dev`, GitHub Actions handles the rest:
 
 ```
-phase branch → dev   (manual PR, human review)
-dev → stg            (auto-created PR, merge when ready to test)
-stg → main           (auto-created PR, merge when ready to release)
+feature branch → dev   (manual PR, human review)
+dev → stg              (auto-created PR, merge when ready to test)
+stg → main             (auto-created PR, merge when ready to release)
 ```
 
 The `dev→stg` PR is created automatically on every merge to `dev`. The `stg→main` PR is created automatically on every merge to `stg`. Both are titled `promote: {from} -> {to}` with a commit log in the body.
@@ -123,19 +122,17 @@ The `dev→stg` PR is created automatically on every merge to `dev`. The `stg→
 
 ## GitHub Projects Status Flow
 
-Issue status tracks the code's progress through the pipeline. Transitions are fully automated via GitHub Actions:
+| Status | Trigger | How |
+|---|---|---|
+| **Backlog** | Issue created | Automated — `issue-to-backlog` workflow |
+| **Ready** | PM triages and prioritises | Manual — PM moves card |
+| **In Progress** | `feature/*` branch pushed | Automated — GitHub Action |
+| **In Review** | PR opened with `Closes #N` | Automated — GitHub Action |
+| **Done** | PR merged to `dev` | Automated — built-in GitHub Projects |
 
-| Status | Trigger |
-|---|---|
-| **Backlog** | Issue created |
-| **Ready** | Phase planned and issues triaged |
-| **In Progress** | Phase branch `feature/phase-N-*` created |
-| **In Review** | PR opened targeting `dev` |
-| **Done** | PR merged to `dev` |
-| **In Staging** | `dev→stg` PR opened |
-| **Released** | PR merged to `main` |
+Two manual moves in the whole flow: PM moves **Backlog → Ready** during grooming; developer moves nothing — branch creation and PR events handle everything else.
 
-No manual status changes needed — as long as `Closes #N` is in the PR body, everything moves automatically.
+Use a **Blocked** label (not a column) when an issue is stuck. An issue can be `In Progress + Blocked` which is more expressive than a separate column that's usually empty.
 
 ---
 
@@ -145,12 +142,11 @@ Five workflows wire up the automation. Each reads `.github/project-config.json` 
 
 | File | Trigger | Action |
 |---|---|---|
-| `branch-phase-created.yml` | `feature/*` branch push | Issues → In Progress |
-| `pr-to-dev-opened.yml` | PR opened → `dev` | Issues → In Review |
-| `on-dev-merge.yml` | PR merged → `dev` | Issues → Done + create `dev→stg` PR |
-| `on-stg-pr-opened.yml` | PR opened → `stg` | Issues → In Staging |
-| `on-stg-merge.yml` | PR merged → `stg` | Create `stg→main` PR |
-| `on-main-merge.yml` | PR merged → `main` | All In Staging issues → Released |
+| `issue-to-backlog.yml` | Issue opened | Adds issue to board → Backlog |
+| `issue-to-in-progress.yml` | `feature/*` branch pushed | Issue → In Progress |
+| `issue-to-in-review.yml` | PR opened → `dev` | Issues → In Review |
+| `pr-to-stg.yml` | PR merged → `dev` | Issues → Done + create `dev→stg` PR |
+| `pr-to-main.yml` | PR merged → `stg` | Create `stg→main` PR |
 
 The helper script `.github/scripts/move-issue.sh <issue_number> "<Status Name>"` handles the GraphQL mutation. Workflows call it in a loop over extracted issue numbers.
 
@@ -158,42 +154,39 @@ The helper script `.github/scripts/move-issue.sh <issue_number> "<Status Name>"`
 
 ## Project Config File
 
-`.github/project-config.json` stores the GitHub Projects node IDs so workflows don't hardcode them. Structure:
+`.github/project-config.json` stores the GitHub Projects node IDs so workflows don't hardcode them. Written automatically by `setup.sh` — do not edit manually.
 
 ```json
 {
   "project_node_id": "PVT_...",
   "status_field_id": "PVTSSF_...",
   "options": {
-    "Backlog": "...",
-    "Ready": "...",
-    "In Progress": "...",
-    "In Review": "...",
-    "Done": "...",
-    "In Staging": "...",
-    "Released": "..."
+    "Backlog":      "...",
+    "Ready":        "...",
+    "In Progress":  "...",
+    "In Review":    "...",
+    "Done":         "..."
   }
 }
 ```
-
-To set this up in a new project: create the GitHub Project with a `Status` single-select field using the same column names, then query the GraphQL API to get the IDs.
 
 ---
 
 ## Branch Protection Rules
 
-Apply these via **Settings → Branches → Add rule** for each protected branch, or via the `gh` CLI:
+Applied automatically by `setup.sh`. To apply manually via the `gh` CLI:
 
 ```bash
 gh api repos/{owner}/{repo}/branches/{branch}/protection \
   --method PUT \
-  --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field enforce_admins=true \
+  --field allow_force_pushes=false \
+  --field allow_deletions=false \
   --field restrictions=null \
   --field required_status_checks=null
 ```
 
-### Current rules (all three branches: `main`, `stg`, `dev`)
+### Rules applied to all three branches (`main`, `stg`, `dev`)
 
 | Rule | Value | Effect |
 |---|---|---|
@@ -201,17 +194,15 @@ gh api repos/{owner}/{repo}/branches/{branch}/protection \
 | `allow_force_pushes` | `false` | `git push --force` is rejected |
 | `allow_deletions` | `false` | Branch cannot be deleted via push |
 
-### Recommended additions for `main` and `stg`
-
-These are not yet enforced on this repo but should be set on any team project:
+### Recommended additions for `main` and `stg` on team projects
 
 | Rule | Recommended value | Why |
 |---|---|---|
-| `required_pull_request_reviews` | 1 approving review, dismiss stale | Prevents direct pushes |
+| `required_pull_request_reviews` | 1 approving review | Prevents direct pushes |
 | `dismiss_stale_reviews` | `true` | New commits invalidate existing approval |
 | `required_conversation_resolution` | `true` | All review threads must be resolved before merge |
 
-`dev` can be left without required reviews if you are the sole developer — direct pushes to `dev` are low risk since it is never deployed to production directly.
+`dev` can be left without required reviews for solo developers — it is never deployed to production directly.
 
 ---
 
@@ -225,11 +216,9 @@ These are not yet enforced on this repo but should be set on any team project:
 
 ## GitHub Project Fields
 
-The project board uses these fields:
-
 | Field | Type | Options |
 |---|---|---|
-| **Status** | Single select | Won't do, Backlog, Ready, In Progress, In Review, Done, In Staging, Released |
+| **Status** | Single select | Backlog, Ready, In Progress, In Review, Done |
 | **Priority** | Single select | P0 (critical), P1 (high), P2 (normal) |
 | **Size** | Single select | XS, S, M, L, XL |
 | **Estimate** | Number | Story points or hours |
@@ -239,73 +228,6 @@ Plus GitHub's built-in fields: Assignees, Labels, Milestone, Linked pull request
 
 ---
 
-## Setting Up in a New Project
+## Setting Up
 
-### 1. Create branches
-
-```bash
-git checkout -b dev && git push -u origin dev
-git checkout -b stg && git push -u origin stg
-# main already exists
-```
-
-Apply branch protection rules (see section above) via GitHub Settings → Branches.
-
-### 2. Create the GitHub Project and write project-config.json
-
-```bash
-GH_TOKEN=<pat> bash .github/scripts/create-project.sh <github-username> "My Project"
-```
-
-This creates the project, sets all fields and Status options, and writes `.github/project-config.json` automatically.
-
-### 3. Copy the automation files
-
-```bash
-# From an existing repo using this strategy:
-cp .github/workflows/*.yml            /path/to/new-repo/.github/workflows/
-cp .github/scripts/move-issue.sh      /path/to/new-repo/.github/scripts/
-cp .github/scripts/create-project.sh  /path/to/new-repo/.github/scripts/
-```
-
-Then update the three hardcoded values in the copied files:
-
-| Value | Files | Replace with |
-|---|---|---|
-| `christancho/g3s` (repo slug) | `dev-merged.yml`, `stg-merged.yml`, `branch-to-in-progress.yml`, `move-issue.sh` | `owner/new-repo` |
-| `christancho` (owner login) | `main-merged.yml`, `stg-pr-opened.yml` | new owner login |
-| `projectV2(number: 1)` and `project.number == 1` | `main-merged.yml`, `stg-pr-opened.yml`, `move-issue.sh` | new project number (printed by `create-project.sh`) |
-
-Quick one-liner to do all three at once (run from the new repo root):
-
-```bash
-OWNER=myname REPO=my-repo PROJECT_NUM=2
-
-sed -i '' \
-  -e "s|<old-owner>/<old-repo>|$OWNER/$REPO|g" \
-  -e "s|\"<old-owner>\"|\"$OWNER\"|g" \
-  -e "s|number: <old-project-num>)|number: $PROJECT_NUM)|g" \
-  -e "s|number == <old-project-num>|number == $PROJECT_NUM|g" \
-  .github/workflows/*.yml .github/scripts/move-issue.sh
-```
-
-### 4. Add the secret
-
-In GitHub → Settings → Secrets → Actions, add:
-
-| Secret | Value |
-|---|---|
-| `GH_PAT` | Personal access token with `repo` + `project` scopes |
-
-### 5. Create milestones and issues
-
-```bash
-# Create a milestone per phase
-gh milestone create --repo <owner>/<repo> --title "Phase 1 — Auth" --due-date 2026-06-01
-
-# Create requirement issues and assign to milestone
-gh issue create --repo <owner>/<repo> --title "REQ-01: User login" --milestone 1
-
-# Add issues to the project board
-gh project item-add <project-number> --owner <owner> --url <issue-url>
-```
+See `README.md` — `setup.sh` handles everything in one command.
