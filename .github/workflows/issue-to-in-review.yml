@@ -15,7 +15,7 @@ jobs:
   move-to-in-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Extract issue numbers from PR body
         id: issues
