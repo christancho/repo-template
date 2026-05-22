@@ -241,8 +241,8 @@ echo "=== Setup complete ==="
 echo ""
 echo "  Repo:    https://github.com/$OWNER/$REPO"
 # Board URL differs for personal accounts vs orgs
-IS_ORG=$(gh api "orgs/$OWNER" --jq '.login' 2>/dev/null || true)
-if [ -n "$IS_ORG" ]; then
+OWNER_TYPE=$(gh api "users/$OWNER" --jq '.type' 2>/dev/null || echo "User")
+if [ "$OWNER_TYPE" = "Organization" ]; then
   echo "  Board:   https://github.com/orgs/$OWNER/projects/$PROJECT_NUMBER"
 else
   echo "  Board:   https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
