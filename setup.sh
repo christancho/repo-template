@@ -223,15 +223,8 @@ for BRANCH in main stg dev; do
 done
 
 # ── 15. Set GH_PAT secret ─────────────────────────────────────────────────────
-echo ""
-read -rp "Set GH_PAT secret now (uses token you just entered)? [Y/n]: " SET_SECRET
-if [[ "$SET_SECRET" != "n" && "$SET_SECRET" != "N" ]]; then
-  gh secret set GH_PAT --repo "$OWNER/$REPO" --body "$GH_TOKEN"
-  echo "GH_PAT secret set"
-else
-  echo "Reminder: add GH_PAT secret manually at:"
-  echo "  https://github.com/$OWNER/$REPO/settings/secrets/actions"
-fi
+gh secret set GH_PAT --repo "$OWNER/$REPO" --body "$GH_TOKEN"
+echo "GH_PAT secret set"
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
