@@ -40,10 +40,13 @@ echo ""
 TEMPLATE_REPO="christancho/repo-template"
 
 echo "Creating $OWNER/$REPO from template $TEMPLATE_REPO..."
-gh repo create "$OWNER/$REPO" \
+if ! gh repo create "$OWNER/$REPO" \
   --template "$TEMPLATE_REPO" \
   "--$VISIBILITY" \
-  --clone
+  --clone; then
+  echo "ERROR: gh repo create failed (exit $?)" >&2
+  exit 1
+fi
 
 cd "$REPO"
 echo "Cloned into $(pwd)"
