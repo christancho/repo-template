@@ -219,18 +219,24 @@ done
 gh secret set GH_PAT --repo "$OWNER/$REPO" --body "$GH_TOKEN"
 echo "GH_PAT secret set"
 
+# ── Done: clean up setup.sh from the new repo ────────────────────────────────
+git rm setup.sh
+git commit -m "chore: remove setup.sh (one-time setup complete)"
+git push
+
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "  Repo:    https://github.com/$OWNER/$REPO"
-# Board URL differs for personal accounts vs orgs
 OWNER_TYPE=$(gh api "users/$OWNER" --jq '.type' 2>/dev/null || echo "User")
 if [ "$OWNER_TYPE" = "Organization" ]; then
   echo "  Board:   https://github.com/orgs/$OWNER/projects/$PROJECT_NUMBER"
 else
   echo "  Board:   https://github.com/users/$OWNER/projects/$PROJECT_NUMBER"
 fi
+echo ""
+echo "  README.md is yours — update it to describe your project."
 echo ""
 echo "Next:"
 echo "  cd $REPO"
