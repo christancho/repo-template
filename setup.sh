@@ -37,10 +37,7 @@ fi
 echo ""
 
 # ── 3. Create and clone the repo ──────────────────────────────────────────────
-# Detect the template repo from this script's git remote
-TEMPLATE_REPO=$(git -C "$(dirname "$0")" remote get-url origin 2>/dev/null \
-  | sed 's|.*github\.com[:/]\(.*\)\.git|\1|; s|.*github\.com[:/]\(.*\)|\1|')
-TEMPLATE_REPO="${TEMPLATE_REPO:-christancho/repo-template}"
+TEMPLATE_REPO="christancho/repo-template"
 
 echo "Creating $OWNER/$REPO from template $TEMPLATE_REPO..."
 gh repo create "$OWNER/$REPO" \
