@@ -169,7 +169,7 @@ CONFIG=$(gh api graphql -f query="
 {
   node(id: \"$PROJECT_ID\") {
     ... on ProjectV2 {
-      fields(first: 5) {
+      fields(first: 20) {
         nodes {
           ... on ProjectV2SingleSelectField { id name options { id name } }
         }

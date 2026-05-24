@@ -20,6 +20,11 @@ PROJECT_NODE_ID=$(jq -r '.project_node_id' "$CONFIG")
 STATUS_FIELD_ID=$(jq -r '.status_field_id' "$CONFIG")
 OPTION_ID=$(jq -r --arg name "$STATUS_NAME" '.options[$name]' "$CONFIG")
 
+if [ -z "$PROJECT_NODE_ID" ] || [ -z "$STATUS_FIELD_ID" ]; then
+  echo "ERROR: $CONFIG is not populated — run setup.sh to initialize the project board" >&2
+  exit 1
+fi
+
 if [ "$OPTION_ID" = "null" ]; then
   echo "ERROR: Unknown status '$STATUS_NAME'" >&2
   exit 1
